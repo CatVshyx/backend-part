@@ -15,23 +15,14 @@ import java.util.Map;
 public class MainController {
     @Autowired
     private UserService userService;
-    @GetMapping("/hi")
-    public String sayHi(){
-        return "hello";
-    }
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody Map<String,String> request){
+    @GetMapping("/showSample")
+    public ResponseEntity<String> showSample(){
         return null;
     }
 
-    @GetMapping("/getUsers")
-    public String getUsers(){
-        return userService.getUsers();
-    }
-    @PostMapping("/addUser")
-    public ResponseEntity<String> addUsers(@RequestBody Map<String,String> body){
-       return new ResponseEntity<>(HttpStatus.OK);
 
+    @GetMapping("/downloadFile")
+    public ResponseEntity<String> download(){
+        return null;
     }
-
 }

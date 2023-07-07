@@ -16,6 +16,9 @@ public class Form {
     private String formLink;
     private String sampleLink;
 
+    public Form() {
+    }
+
     public long getId() {
         return id;
     }

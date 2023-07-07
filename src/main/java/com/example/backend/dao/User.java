@@ -17,19 +17,25 @@ public class User {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
     private int id;
-
     private String login;
-    private String firstName;
-    private String secondName;
-    private String patronym;
-
+    private String name;
     private String password;
 
     @JsonDeserialize(using = LocalDateDeserializer.class)
     @JsonSerialize(using = LocalDateSerializer.class)
     private LocalDate expiredAt;
-
     private boolean admin;
+
+
+    public User() {
+    }
+
+    public User(String login, String name, String password, LocalDate expiredAt) {
+        this.login = login;
+        this.name = name;
+        this.password = password;
+        this.expiredAt = expiredAt;
+    }
 
     public long getId() {
         return id;
@@ -39,27 +45,39 @@ public class User {
         this.id = id;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getName() {
+        return name;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getSecondName() {
-        return secondName;
+    public String getLogin() {
+        return login;
     }
 
-    public void setSecondName(String secondName) {
-        this.secondName = secondName;
+    public void setLogin(String login) {
+        this.login = login;
     }
 
-    public String getPatronym() {
-        return patronym;
+    public boolean isAdmin() {
+        return admin;
     }
 
-    public void setPatronym(String patronym) {
-        this.patronym = patronym;
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", login='" + login + '\'' +
+                ", name='" + name + '\'' +
+                ", password='" + password + '\'' +
+                ", expiredAt=" + expiredAt +
+                ", admin=" + admin +
+                '}';
     }
 }
