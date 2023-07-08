@@ -38,7 +38,6 @@ public class AdminController {
     }
     @DeleteMapping("/deleteUser")
     public ResponseEntity<String> deleteUser(@RequestParam String login){
-        //TODO Admin can`t delete himself
         return new ResponseEntity<>(userService.deleteUser(login) ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
     @GetMapping("/getUsers")

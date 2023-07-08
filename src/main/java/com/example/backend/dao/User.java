@@ -8,8 +8,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Entity
 
@@ -69,6 +75,22 @@ public class User {
         this.admin = admin;
     }
 
+    public LocalDate getExpiredAt() {
+        return expiredAt;
+    }
+
+    public void setExpiredAt(LocalDate expiredAt) {
+        this.expiredAt = expiredAt;
+    }
+
+    public static UserDetails toUserDetails(User user){
+        return new org.springframework.security.core.userdetails.User(user.login,user.password, getAuthorities(user.isAdmin()));
+    }
+    public static Collection<? extends GrantedAuthority> getAuthorities(Boolean isAdmin) {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(isAdmin.toString()));
+        return authorities;
+    }
     @Override
     public String toString() {
         return "User{" +
