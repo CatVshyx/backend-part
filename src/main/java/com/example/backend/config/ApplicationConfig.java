@@ -13,7 +13,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import java.time.LocalDate;
 
 @Configuration
 public class ApplicationConfig {
@@ -25,11 +24,6 @@ public class ApplicationConfig {
             User user = userRepository.findByLogin(login).orElseThrow(() -> {
                 throw new UsernameNotFoundException("User is not found");
             });
-            LocalDate expiration = user.getExpiredAt();
-            if (expiration != null && expiration.isBefore(LocalDate.now())){
-                System.out.println("this");
-                throw new UsernameNotFoundException("this account is expired at %s".formatted(expiration) );
-            }
             return User.toUserDetails(user);
         };
     }

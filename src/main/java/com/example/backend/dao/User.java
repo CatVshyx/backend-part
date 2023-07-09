@@ -1,5 +1,6 @@
 package com.example.backend.dao;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
@@ -11,7 +12,6 @@ import jakarta.persistence.Id;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,15 +25,23 @@ public class User {
     private int id;
     private String login;
     private String name;
+    @JsonIgnore
     private String password;
 
     @JsonDeserialize(using = LocalDateDeserializer.class)
     @JsonSerialize(using = LocalDateSerializer.class)
     private LocalDate expiredAt;
+    @JsonIgnore
     private boolean admin;
 
 
     public User() {
+    }
+
+    public User(String login, String name, String password) {
+        this.login = login;
+        this.name = name;
+        this.password = password;
     }
 
     public User(String login, String name, String password, LocalDate expiredAt) {
@@ -93,11 +101,8 @@ public class User {
     }
     @Override
     public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", login='" + login + '\'' +
+        return "User{ login='" + login + '\'' +
                 ", name='" + name + '\'' +
-                ", password='" + password + '\'' +
                 ", expiredAt=" + expiredAt +
                 ", admin=" + admin +
                 '}';
