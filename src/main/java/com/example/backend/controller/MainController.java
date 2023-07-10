@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,9 +19,16 @@ public class MainController {
 
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestBody HashMap<String,String> map){
-        if (!map.containsKey("current_password") && !map.containsKey("new_password"))
+        String password = map.get("current_password");
+        String newPassword = map.get("new_password");
+
+        if (password == null || newPassword == null)
             return new ResponseEntity<>("Data sent invalid", HttpStatus.BAD_REQUEST);
-        return userService.changePassword(token,map);
+        try{
+            return userService.changePassword(token.substring(7),password,newPassword);
+        }catch (UsernameNotFoundException e){
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        }
     }
     @GetMapping("/showSample")
     public ResponseEntity<String> showSample(){

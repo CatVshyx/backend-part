@@ -32,8 +32,4 @@ public class AuthorizationController {
         return authorizationService.refresh(token);
 
     }
-    @GetMapping("/hi")
-    public String hi(){
-        return "hi";
-    }
 }

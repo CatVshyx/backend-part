@@ -91,6 +91,14 @@ public class User {
         this.expiredAt = expiredAt;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public static UserDetails toUserDetails(User user){
         return new org.springframework.security.core.userdetails.User(user.login,user.password, getAuthorities(user.isAdmin()));
     }

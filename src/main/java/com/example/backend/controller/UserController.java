@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
@@ -41,14 +42,15 @@ public class UserController {
             return userService.editUser(id,login,name);
         }catch (NumberFormatException | NullPointerException e){
             return new ResponseEntity<>("Invalid data received",HttpStatus.BAD_REQUEST);
+        }catch (UsernameNotFoundException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
     @PatchMapping("/extend-expiration")
     public ResponseEntity<String> extendExpiration(@RequestBody HashMap<String, String> map){
         try{
-            //TODO TRY orelsethrow
             int id = Integer.parseInt(map.get("id"));
-            int days = Integer.parseInt("days");
+            int days = Integer.parseInt(map.get("days"));
             return userService.extendUserDays(id, days);
         }catch (Exception e){
             return new ResponseEntity<>("Invalid data received",HttpStatus.BAD_REQUEST);
@@ -56,12 +58,20 @@ public class UserController {
     }
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteUser(@RequestParam int id){
-        return new ResponseEntity<>(userService.deleteUser(id) ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+        try{
+            return userService.deleteUser(id);
+        }
+        catch (UsernameNotFoundException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
     @GetMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(){
-        //TODO
-        return null;
+    public ResponseEntity<Object> resetPassword(@RequestParam int id){
+        try{
+            return ResponseEntity.ok(userService.resetPassword(id,12));
+        }catch (UsernameNotFoundException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
     @GetMapping("/")
     public List<User> getUsers(){
