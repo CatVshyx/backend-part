@@ -1,22 +1,23 @@
 package com.example.backend.dao;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
 public class Form {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
-
     private String name;
-
-    private String formLink;
+    private String blankLink;
     private String sampleLink;
 
-    public Form() {
+    @OneToMany( mappedBy = "form")
+    private List<LinkedTable> linkedTable;
+    public Form() {}
+
+    public Form(String name) {
+        this.name = name;
     }
 
     public long getId() {
@@ -35,12 +36,12 @@ public class Form {
         this.name = name;
     }
 
-    public String getFormLink() {
-        return formLink;
+    public String getBlankLink() {
+        return blankLink;
     }
 
-    public void setFormLink(String formLink) {
-        this.formLink = formLink;
+    public void setBlankLink(String blankLink) {
+        this.blankLink = blankLink;
     }
 
     public String getSampleLink() {
@@ -49,5 +50,15 @@ public class Form {
 
     public void setSampleLink(String sampleLink) {
         this.sampleLink = sampleLink;
+    }
+
+    @Override
+    public String toString() {
+        return "Form{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", blankLink='" + blankLink + '\'' +
+                ", sampleLink='" + sampleLink + '\'' +
+                '}';
     }
 }

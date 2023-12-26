@@ -1,8 +1,9 @@
 package com.example.backend.service;
 
-import com.example.backend.config.JwtService;
 import com.example.backend.dao.User;
 import com.example.backend.repository.UserRepository;
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -17,7 +18,6 @@ import java.util.*;
 
 @Service
 public class UserService {
-    //TODO SQL injections
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -28,14 +28,12 @@ public class UserService {
     private String adminLogin;
     @Value("${admin.password}")
     private String adminPassword;
-    private String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
+    private final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
     public List<User> getUsers(){
-        List<User> list = new ArrayList<>();
-        userRepository.findAll().forEach(list::add);
-        return list;
+        return userRepository.findAll();
     }
     @EventListener(ApplicationReadyEvent.class)
-    public void checkAdminOnStartup() {
+    public void setAdminOnStartup() {
         for(User user : userRepository.findAll()){
             if (user.isAdmin())
                 return;
@@ -43,93 +41,90 @@ public class UserService {
 
         User user = new User(adminLogin,"root",passwordEncoder.encode(adminPassword),null);
         user.setAdmin(true);
-        System.out.println(user);
         userRepository.save(user);
     }
 
-    public ResponseEntity<String> addUser(String login, String password, String name,String exp) throws NumberFormatException{
-
+    public ResponseEntity<Object> createUser(String login, String password, String username,int expiration) throws NumberFormatException,EntityExistsException{
         for(User user : userRepository.findAll()){
             if (user.getLogin().equals(login))
-                return new ResponseEntity<>("User with such login already exists", HttpStatus.CONFLICT);
+                throw new EntityExistsException("Such user already exists");
         }
         if (password.length() < 8)
-            return new ResponseEntity<>("Password is too short",HttpStatus.NOT_ACCEPTABLE);
+            return new ResponseEntity<>(Map.of("error","Password is too short"),HttpStatus.NOT_ACCEPTABLE);
 
-        User user = new User(login, name,passwordEncoder.encode(password));
-        int expiration = exp == null ? 30 : Integer.parseInt(exp);
-        if (expiration  <  0 || expiration > 365)
-            expiration = 30;
+        User user = new User(login, username,passwordEncoder.encode(password));
+        expiration = expiration < 0 || expiration > 365 ? 30 : expiration;
         user.setExpiredAt(LocalDate.now().plusDays(expiration));
-        userRepository.save(user);
 
-        return new ResponseEntity<>("User is saved", HttpStatus.OK);
+        return  ResponseEntity.ok(userRepository.save(user));
     }
-    public ResponseEntity<String> deleteUser(int id){
+    public void deleteUser(int id){
         User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(null));
         if (user.isAdmin())
-            return new ResponseEntity<>("Operation cannot be done",HttpStatus.UNAUTHORIZED);
-        userRepository.delete(user);
+            throw new IllegalArgumentException("admin can`t delete himself");
 
-        return ResponseEntity.ok("User was deleted");
+        userRepository.delete(user);
     }
     User findUserByLogin(String login) throws UsernameNotFoundException{
-        return userRepository.findByLogin(login).orElseThrow(() -> new UsernameNotFoundException("User with such login is not found"));
+        return userRepository.findByLogin(login).orElseThrow(() -> new UsernameNotFoundException(null));
     }
-    public ResponseEntity<String> editUser(int id, String login, String name){
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(null));
+    public void editUser(int id, String login, String name) throws EntityNotFoundException{
+        User user = userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
 
-        if (name != null)
+        if (name != null && !user.getName().equals(name)){
+            if (userRepository.existsByName(name))
+                throw new EntityExistsException("Such name is already defined");
             user.setName(name);
-        if (login != null){
-            if(userRepository.findByLogin(login).isPresent())
-                return new ResponseEntity<>("Such login is already occupied",HttpStatus.CONFLICT);
+        }
+        if (login != null && !user.getLogin().equals(login)){
+            if(userRepository.existsByLogin(login))
+                throw new EntityExistsException("Such login is already occupied");
             user.setLogin(login);
         }
 
         userRepository.save(user);
-        return new ResponseEntity<>("User info was updated",HttpStatus.OK);
     }
-    public ResponseEntity<String> extendUserDays(int id, int days){
+    public void extendUserDays(int id, int days){
         Optional<User> optional = userRepository.findById(id);
 
         if (optional.isEmpty() || optional.get().isAdmin())
-            return new ResponseEntity<>("User not found",HttpStatus.NOT_FOUND);
+            throw new EntityNotFoundException("User not found");
         if (days < 0 || days > 365)
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            throw new IllegalArgumentException("Only numbers from 0 - 365 are allowed");
 
         User user = optional.get();
         user.setExpiredAt(user.getExpiredAt().plusDays(days));
-
         userRepository.save(user);
-        return ResponseEntity.ok("This user`s expiration was extended");
     }
 
-    public ResponseEntity<String> changePassword(String token, String password, String newPassword) {
+    public ResponseEntity<Object> changePassword(String token, String password, String newPassword) throws EntityNotFoundException{
         String login = jwtService.extractLogin(token);
-        User user = userRepository.findByLogin(login).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userRepository.findByLogin(login).orElseThrow(EntityNotFoundException::new);
 
-        if (!passwordEncoder.matches(password,user.getPassword()))
-            return new ResponseEntity<>("Invalid password", HttpStatus.UNAUTHORIZED);
+        if (!passwordEncoder.matches(password,user.getPassword()) || user.isAdmin())
+            return new ResponseEntity<>(Map.of("error","Invalid password"), HttpStatus.UNAUTHORIZED);
         if (newPassword.length() < 8)
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            return new ResponseEntity<>(Map.of("error","Password is less than 8 characters"),HttpStatus.CONFLICT);
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        return ResponseEntity.ok("Password successfully changed");
+        return ResponseEntity.ok().build();
     }
 
-    public Map<String,String> resetPassword(int id, int limit) {
-        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException(null));
-        //TODO Can admin change password and reset?
+    public Map<String,String> resetPassword(int id, int charMax) throws EntityNotFoundException{
+        User user = userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        if (user.isAdmin())
+            throw new UsernameNotFoundException(null);
+
         Random rd = new Random();
-        char[] arr = new char[limit];
-        String password;
-        for(int i = 0; i < limit; i++){
-            arr[i] = alphabet.charAt(rd.nextInt(256)% alphabet.length());
+        char[] arr = new char[charMax];
+        for(int i = 0; i < charMax; i++){
+            arr[i] = CHARACTERS.charAt(rd.nextInt(256) % CHARACTERS.length());
         }
-        password = new String(arr);
+
+        String password = new String(arr);
         user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
+
         return Map.of("login",user.getLogin(),"password",password);
 
     }

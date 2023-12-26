@@ -15,27 +15,27 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-
     private final JwtAuthFilter jwtAuthFilter;
-    //TODO Implement
     private final AuthenticationProvider authenticationProvider;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.authenticationProvider = authenticationProvider;
     }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+
         http.csrf(AbstractHttpConfigurer::disable)
-//                .authorizeHttpRequests().anyRequest().permitAll()
-                .authorizeHttpRequests( httpRequests -> httpRequests.requestMatchers("/auth/**").permitAll())
-                .authorizeHttpRequests(httpRequests -> httpRequests.requestMatchers("/users/**" , "/form/**").hasAuthority("true"))
-                .authorizeHttpRequests(httpRequests -> httpRequests.anyRequest().authenticated())
+                .authorizeHttpRequests(httpRequests -> httpRequests.requestMatchers("/api/auth/**").permitAll())
+                .authorizeHttpRequests(httpRequests -> httpRequests.requestMatchers("/api/users/**").hasAuthority("true"))
+                .authorizeHttpRequests(httpRequests -> httpRequests.requestMatchers("/api/**").authenticated())
+                .authorizeHttpRequests(httpRequests -> httpRequests.anyRequest().permitAll())
                 .sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class).headers(header -> header.frameOptions().sameOrigin());
 
         return http.build();
     }
+
+
 }
