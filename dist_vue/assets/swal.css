@@ -1,0 +1,31 @@
+.swal2-popup, .swal2-toast {
+    background: var(--component-color) !important;
+    color: var(--text-color) !important;
+}
+button.swal2-styled.swal2-confirm {
+    background-color: var(--green-color);
+}
+.swal2-timer-progress-bar {
+    background-color: var(--yellow-color-op30);
+}
+
+
+.swal2-modal.show-overflow .swal2-html-container {
+    overflow: visible;
+}
+.swal2-modal.z0-buttons .swal2-actions {
+    z-index: 0;
+}
+.swal2-modal.no-margin {
+    padding: 0;
+}
+.swal2-modal.no-margin .swal2-html-container {
+    margin: 10px;
+    margin-top: 20px;
+}
+@media screen and (max-width: 475px) {
+    .swal2-modal.no-margin .swal2-html-container {
+        margin: 5px;
+        margin-top: 20px;
+    }
+}
